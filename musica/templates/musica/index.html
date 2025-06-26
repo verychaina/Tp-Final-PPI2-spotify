@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Buscar Música - Spotify Style</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+/* Body y texto */
+    body {
+      background-color: #121212;
+      color: #fff;
+      font-family: 'Montserrat', sans-serif;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      overflow-x: hidden; /* Evita scroll horizontal global */
+    }
+
+    h1, h2 {
+      color: #1DB954;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    /* Formulario logout */
+    .logout-form {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 1rem;
+    }
+    .logout-form button {
+      background-color: transparent;
+      border: 2px solid #1DB954;
+      color: #1DB954;
+      font-weight: 600;
+      padding: 0.3rem 1rem;
+      border-radius: 50px;
+      cursor: pointer;
+    }
+
+    /* Formulario búsqueda */
+    form.search-form {
+      max-width: 600px;
+      margin: 0 auto 2rem auto;
+      display: flex;
+      gap: 0.5rem;
+    }
+    form.search-form input[type="text"] {
+      flex-grow: 1;
+      padding: 0.6rem 1rem;
+      border-radius: 50px;
+      border: none;
+      background-color: #282828;
+      color: white;
+    }
+    form.search-form button {
+      background-color: #1DB954;
+      border: none;
+      padding: 0 1.5rem;
+      border-radius: 50px;
+      font-weight: 700;
+      color: #121212;
+    }
+
+    .btn-buscar {
+      background-color: #1DB954;
+      border: none;
+      padding: 0.6rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 700;
+      color: #121212;
+      width: 550px;
+      display: inline-block;
+      text-align: center;
+      }
+
+
+    /* Botón de selección */
+    .search-artist {
+      background-color: #1DB954;
+      border: none;
+      padding: 0.6rem 1.5rem;
+      border-radius: 50px;
+      font-weight: 700;
+      color: #121212;
+      margin-top: 1rem;
+    }
+
+    /* Lista de artistas */
+    .artist-list {
+      max-height: 600px;
+      overflow-y: auto;
+      padding-right: 1rem;
+      border-right: 1px solid #282828;
+    }
+
+    /* Tarjeta de artista */
+    .artist-card {
+      background-color: #282828;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .artist-card img {
+      border-radius: 50%;
+      width: 160px;
+      height: 160px;
+      object-fit: cover;
+      margin-bottom: 1rem;
+      border: 3px solid #1DB954;
+    }
+
+    /* Etiquetas de género */
+    .genre-badge {
+      display: inline-block;
+      background-color: #1DB954;
+      color: #121212;
+      padding: 0.2rem 0.8rem;
+      border-radius: 15px;
+      font-size: 0.75rem;
+      margin: 0.1rem;
+    }
+
+    /* Estadísticas de artista */
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+      color: #b3b3b3;
+    }
+    .stats div span {
+      font-weight: 700;
+      color: white;
+      display: block;
+    }
+
+    /* Carrusel */
+    .carousel-item {
+      padding: 0 1rem; /* Menos padding para evitar scroll horizontal */
+    }
+
+    /* Tarjeta canción */
+    .card-song {
+      background-color: #282828;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+      padding: 1rem;
+      color: white;
+      max-width: 100%; /* Ocupa todo el ancho de la columna */
+      margin: 0 auto;
+    }
+    .card-song h5 {
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+
+    /* Ajustes para el iframe Spotify */
+    .card-song iframe {
+      width: 100% !important;
+      height: 220px !important;
+      border-radius: 12px;
+      border: none;
+      display: block;
+    }
+
+    /* Para que las filas no tengan margenes laterales extra que puedan crear scroll */
+    .row {
+      margin-left: 0;
+      margin-right: 0;
+    }
+
+    /* Ajuste de columnas para padding */
+    .col-md-6 {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+
+  </style>
+</head>
+<body>
+
+  <h1>Buscar Música en Spotify por Artista</h1>
+
+  <form method="post" action="{% url 'logout' %}" class="logout-form">
+    {% csrf_token %}
+    <button type="submit">Cerrar sesión</button>
+  </form>
+
+  <!-- Formulario de búsqueda -->
+  <form method="get" class="search-form" role="search">
+    <input type="text" name="query" placeholder="Ej: Queen, Shakira..." value="{{ query|default:'' }}" />
+    <button type="submit">Buscar</button>
+  </form>
+  
+  {% if resultados %}
+    <!-- Formulario para seleccionar artistas y ver canciones -->
+    <form method="post" action="{% url 'generar_dataset' %}" novalidate>
+      <input type="hidden" name="query" value="{{ query }}">
+      {% csrf_token %}
+      <div class="row">
+        <div class="col-md-6 artist-list">
+          <h2>Seleccioná artistas</h2>
+          <div class="row">
+            {% for artista in resultados %}
+              <div class="col-md-6">
+                <div class="artist-card">
+                  {% if artista.images %}
+                    <img src="{{ artista.images.0.url }}" alt="{{ artista.name }}">
+                  {% endif %}
+                  <h3>{{ artista.name }}</h3>
+                  <div>
+                    {% for genre in artista.genres %}
+                      <span class="genre-badge">{{ genre }}</span>
+                    {% endfor %}
+                  </div>
+                  <div class="stats">
+                    <div>
+                      <div>Popularidad</div>
+                      <span>{{ artista.popularity }}</span>
+                    </div>
+                    <div>
+                      <div>Seguidores</div>
+                      <span>{{ artista.followers.total|floatformat:"1" }}</span>
+                    </div>
+                  </div>
+                  <input type="checkbox" name="artistas" value="{{ artista.id }}"> Seleccionar
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+          <button type="submit" class="search-artist">Ver artistas seleccionados</button>
+        </div>
+      
+        <!-- Canciones por artista en carrusel -->
+        <div class="col-md-6">
+          <div class="row">
+            {% if artistas_con_canciones %}
+              {% for entrada in artistas_con_canciones %}
+                <div class="col-md-6 mb-5">
+                  <h2>{{ entrada.artista.name }}</h2>
+                  <div id="carousel-{{ forloop.counter }}" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                      {% for cancion in entrada.canciones %}
+                        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                          <div class="card-song text-center">
+                            <h5>{{ cancion.titulo }}</h5>
+                            <iframe src="https://open.spotify.com/embed/track/{{ cancion.id }}" width="100%" height="152" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+                          </div>
+                        </div>
+                      {% endfor %}
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#carousel-{{ forloop.counter }}" data-bs-slide="prev">
+                      <span class="carousel-control-prev-icon"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#carousel-{{ forloop.counter }}" data-bs-slide="next">
+                      <span class="carousel-control-next-icon"></span>
+                    </button>
+                  </div>
+                </div>
+              {% endfor %}
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </form>
+  {% endif %}
+  
+  <!-- Mostrar botón "Ver estadísticas" SOLO si ya hay dataset generado -->
+  {% if dataset_generado %}
+    <form method="post" action="{% url 'ver_estadisticas' %}" target="_blank" class="mt-4 text-center">
+      {% csrf_token %}
+      {% for art_id in request.session.artistas_seleccionados %}
+        <input type="hidden" name="artistas" value="{{ art_id }}">
+      {% endfor %}
+      <button type="submit" class="btn btn-success">Ver estadísticas</button>
+    </form>
+  {% endif %}
+
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

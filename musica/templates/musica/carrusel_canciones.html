@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Tu Carrusel</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+</head>
+<body>
+  <div class="container mt-5">
+    <h2>Canciones Seleccionadas</h2>
+
+    <div id="carruselCanciones" class="carousel slide" data-bs-ride="carousel">
+      <div class="carousel-inner">
+        {% for cancion in canciones %}
+          <div class="carousel-item {% if forloop.first %}active{% endif %}">
+            <div class="card text-center" style="width:24rem;margin:auto;">
+              <div class="card-body">
+                <h5 class="card-title">{{ cancion.titulo }}</h5>
+                <iframe src="https://open.spotify.com/embed/track/{{ cancion.id }}" width="100%" height="152" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+      <button class="carousel-control-prev" type="button" data-bs-target="#carruselCanciones" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon"></span>
+      </button>
+      <button class="carousel-control-next" type="button" data-bs-target="#carruselCanciones" data-bs-slide="next">
+        <span class="carousel-control-next-icon"></span>
+      </button>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

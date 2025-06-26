@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Seleccionar Artistas</title></head>
+<body>
+  <h2>Seleccionar Artistas</h2>
+  <form method="get" action="{% url 'seleccionar_artistas' %}">
+    <select name="ritmo" onchange="this.form.submit()">
+      <option value="">Elige un ritmo</option>
+      {% for ritmo in ritmos %}
+        <option value="{{ ritmo.id }}" {% if ritmo.id == ritmo_seleccionado %}selected{% endif %}>{{ ritmo.nombre }}</option>
+      {% endfor %}
+    </select>
+  </form>
+
+  {% if artistas %}
+    <form method="post" action="{% url 'carrusel_canciones' %}">
+      {% csrf_token %}
+      {% for artista in artistas %}
+        <label>
+          <input type="checkbox" name="artistas" value="{{ artista.id }}"> {{ artista.nombre }}
+        </label><br>
+      {% endfor %}
+      <button type="submit">Ver Canciones</button>
+    </form>
+  {% endif %}
+</body>
+</html>
