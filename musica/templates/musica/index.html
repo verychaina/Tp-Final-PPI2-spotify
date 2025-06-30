@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -178,17 +179,54 @@
       padding-right: 0.75rem;
     }
 
+    .logo-container {
+      position: absolute;
+      top: 20px;
+      left: 75px;
+    }
+
+    .logo-container img {
+      max-width: 100px;
+      height: auto;
+      border-radius: 10px;
+    }
+
+    .btn-logout-style {
+      background-color: transparent;
+      border: 2px solid #1DB954;
+      color: #1DB954;
+      font-weight: 600;
+      padding: 0.3rem 1rem;
+      border-radius: 50px;
+      cursor: pointer;
+      text-decoration: none; /* para enlaces sin subrayado */
+      display: inline-block;
+      text-align: center;
+      margin-top: 0.5rem; /* separación respecto al botón de cerrar sesión */
+    }
+
+    .btn-logout-style:hover {
+      background-color: #1DB954;
+      color: #121212;
+      text-decoration: none;
+    }
+
   </style>
 </head>
 <body>
-
+    <div class="logo-container" style="text-align: center; margin-bottom: 20px;">
+      <img src="{% static 'images/logo_spotipy.png' %}" alt="Logo Spotipy" style="max-width: 120px; height: auto;">
+    </div>
   <h1>Buscar Música en Spotify por Artista</h1>
 
-  <form method="post" action="{% url 'logout' %}" class="logout-form">
-    {% csrf_token %}
-    <button type="submit">Cerrar sesión</button>
-  </form>
-
+  <div style="display: flex; flex-direction: column; align-items: flex-end; margin-bottom: 1rem;">
+    <form method="post" action="{% url 'logout' %}" class="logout-form">
+      {% csrf_token %}
+      <button type="submit">Cerrar sesión</button>
+    </form>
+    <a href="{% url 'ver_favoritos' %}" class="btn-logout-style">Mis Favoritos</a>
+    <a href="{% url 'historial_datasets' %}" class="btn-logout-style">Mi Historial</a>
+  </div>
   <!-- Formulario de búsqueda -->
   <form method="get" class="search-form" role="search">
     <input type="text" name="query" placeholder="Ej: Queen, Shakira..." value="{{ query|default:'' }}" />
@@ -227,6 +265,16 @@
                     </div>
                   </div>
                   <input type="checkbox" name="artistas" value="{{ artista.id }}"> Seleccionar
+                  <!-- Aquí podés poner el bloque para el botón favorito -->
+                    {% if user.is_authenticated %}
+                    {% if artista.id in favoritos_ids %}
+                      <a href="{% url 'toggle_favorito' artista.id %}?nombre={{ artista.name }}&imagen_url={{ artista.images.0.url|urlencode }}" 
+                         class="btn-logout-style" title="Quitar de favoritos">❤️ Guardado</a>
+                    {% else %}
+                      <a href="{% url 'toggle_favorito' artista.id %}?nombre={{ artista.name }}&imagen_url={{ artista.images.0.url|urlencode }}" 
+                         class="btn-logout-style" title="Agregar a favoritos">♡ Guardar</a>
+                    {% endif %}
+                    {% endif %}
                 </div>
               </div>
             {% endfor %}
@@ -267,7 +315,7 @@
       </div>
     </form>
   {% endif %}
-  
+
   <!-- Mostrar botón "Ver estadísticas" SOLO si ya hay dataset generado -->
   {% if dataset_generado %}
     <form method="post" action="{% url 'ver_estadisticas' %}" target="_blank" class="mt-4 text-center">
@@ -275,7 +323,7 @@
       {% for art_id in request.session.artistas_seleccionados %}
         <input type="hidden" name="artistas" value="{{ art_id }}">
       {% endfor %}
-      <button type="submit" class="btn btn-success">Ver estadísticas</button>
+      <button type="submit" class="btn-logout-style">Ver estadísticas</button>
     </form>
   {% endif %}
 

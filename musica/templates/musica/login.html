@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -8,7 +9,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet" />
 
   <style>
-    body {
+body {
   margin: 0;
   font-family: 'Montserrat', sans-serif;
   background: linear-gradient(135deg, #191414 0%, #1DB954 100%);
@@ -105,11 +106,25 @@ button:hover {
   text-decoration: underline;
 }
 
+.logo-container {
+  position: relative;
+  text-align: center;
+}
+
+.logo-container img {
+  max-width: 100px;
+  height: auto;
+  border-radius: 10px;
+}
+
   </style>
 </head>
 <body>
 
   <div class="login-container">
+    <div class="logo-container">
+      <img src="{% static 'images/logo_spotipy.png' %}" alt="Logo Spotipy" style="max-width: 120px; height: auto;">
+    </div>
     <h1 id="page-title">Iniciar sesión</h1>
     <form method="post" class="login-form">
       {% csrf_token %}

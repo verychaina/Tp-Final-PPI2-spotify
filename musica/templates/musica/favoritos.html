@@ -1,0 +1,125 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Artistas Favoritos</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      background-color: #121212;
+      color: white;
+      font-family: 'Montserrat', sans-serif;
+      padding: 2rem 2rem 2rem 2rem; /* arriba, derecha, abajo, izquierda */
+      padding-top: 100px; /* deja espacio para el logo */
+    }
+
+    h2 {
+      color: #1DB954;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background-color: #1e1e1e;
+      border: 1px solid #1DB954;
+      border-radius: 15px;
+      padding: 1rem;
+    }
+
+    .card-img-top {
+      border-radius: 50%;
+      width: 160px;
+      height: 160px;
+      object-fit: cover;
+      margin: 1rem auto 0 auto;
+    }
+
+    .card-title {
+      color: white;
+      font-weight: bold;
+    }
+
+    .btn-volver {
+      background-color: transparent;
+      border: 2px solid #1DB954;
+      color: #1DB954;
+      font-weight: 600;
+      padding: 0.3rem 1rem;
+      border-radius: 50px;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 2rem;
+    }
+
+    .logo-container {
+      position: absolute;
+      top: 20px;
+      left: 75px;
+    }
+
+    .logo-container img {
+      max-width: 100px;
+      height: auto;
+      border-radius: 10px;
+    }
+
+    .btn-logout-style {
+      background-color: transparent;
+      border: 2px solid #1DB954;
+      color: #1DB954;
+      font-weight: 600;
+      padding: 0.3rem 1rem;
+      border-radius: 50px;
+      cursor: pointer;
+      text-decoration: none; /* para enlaces sin subrayado */
+      display: inline-block;
+      text-align: center;
+      margin-top: 0.5rem; /* separación respecto al botón de cerrar sesión */
+    }
+
+    .btn-logout-style:hover {
+      background-color: #1DB954;
+      color: #121212;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="logo-container">
+    <img src="{% static 'images/logo_spotipy.png' %}" alt="Logo Spotipy">
+  </div>
+
+  <h2>Mis Artistas Favoritos</h2>
+
+  <div class="container">
+    {% if favoritos %}
+      <div class="row">
+        {% for artista in favoritos %}
+          <div class="col-md-4 mb-4">
+            <div class="card text-center">
+              <img src="{{ artista.imagen_url }}" class="card-img-top" alt="{{ artista.nombre }}">
+              <div class="card-body">
+                <h5 class="card-title">{{ artista.nombre }}</h5>
+                <a href="{% url 'toggle_favorito' artista.artista_id %}" class="btn-logout-style">Quitar de favoritos</a>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-center">Aún no guardaste ningún artista.</p>
+    {% endif %}
+
+    <div class="text-center">
+      <a href="{% url 'index' %}" class="btn-logout-style">Volver al inicio</a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

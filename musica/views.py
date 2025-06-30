@@ -1,4 +1,8 @@
 from django.shortcuts import render, redirect
+from django.shortcuts import redirect, get_object_or_404
+from .models import ArtistaFavorito
+from .models import Dataset, DatasetCancion, Artista, Album, Cancion
+from .generar_dataset import generar_dataset_para_artistas
 from django.contrib.auth import views as auth_views
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
@@ -23,7 +27,7 @@ from .spotify_client import (
 
 @login_required
 def index(request):
-    query = request.GET.get('query', '')
+    query = request.GET.get('query') or request.session.get('query', '')
     resultados = []
     artistas_con_canciones = []
     grafico_genero = None
@@ -31,11 +35,14 @@ def index(request):
 
     if request.method == 'GET' and query:
         resultados = buscar_artistas_por_nombre_o_genero(query)
+        request.session['query'] = query 
 
     elif request.method == 'POST':
         artistas_ids = request.POST.getlist('artistas')
         query = request.POST.get('query', '')
         resultados = buscar_artistas_por_nombre_o_genero(query) if query else []
+        request.session['query'] = query
+        request.session['artistas_seleccionados'] = artistas_ids
 
         if artistas_ids:
             artistas_info = []
@@ -73,6 +80,10 @@ def index(request):
         grafico_popularidad = None
         grafico_seguidores = None
 
+    if request.user.is_authenticated:
+        favoritos_ids = ArtistaFavorito.objects.filter(usuario=request.user).values_list('artista_id', flat=True)
+    else:
+        favoritos_ids = []
 
     contexto = {
     'query': query,
@@ -83,6 +94,7 @@ def index(request):
     'grafico_seguidores': grafico_seguidores,
     'graficos_extra': graficos_extra,
     'dataset_generado': request.session.get('dataset_generado', False),
+    'favoritos_ids': list(favoritos_ids),
 }
     return render(request, 'musica/index.html', contexto)
 
@@ -289,11 +301,6 @@ def generar_graficos_dataset(df):
     plt.close('all')  # libera memoria
     return graficos
 
-
-from django.conf import settings
-import os
-from .generar_dataset import generar_dataset_para_artistas  # ya la tienes importada
-
 @login_required
 def generar_dataset_backend(request):
     if request.method == 'POST':
@@ -301,19 +308,46 @@ def generar_dataset_backend(request):
         query = request.POST.get('query', '')
 
         if not artistas_ids:
-            # Si no seleccionaron artistas, volver a index con mensaje o sin dataset
             return redirect('index')
 
-        # Generar dataframe y guardar dataset
+        # Generar el DataFrame
         df = generar_dataset_para_artistas(artistas_ids)
         ruta_archivo = os.path.join(settings.BASE_DIR, 'dataset.xlsx')
         df.to_excel(ruta_archivo, index=False)
 
-        # Guardar en sesión la info del dataset generado y artistas
+        # Guardar en sesión
         request.session['dataset_generado'] = True
         request.session['artistas_seleccionados'] = artistas_ids
 
-        # Buscar información y canciones para mostrar en la misma página
+        # 🔸 1. Crear el Dataset para el usuario
+        dataset = Dataset.objects.create(usuario=request.user)
+
+        # 🔸 2. Guardar canciones y relaciones
+        for _, row in df.iterrows():
+            artista_obj, _ = Artista.objects.get_or_create(
+                nombre=row['artistas']
+            )
+            album_obj, _ = Album.objects.get_or_create(
+                nombre=row['album'],
+                artista=artista_obj
+            )
+            cancion_obj, _ = Cancion.objects.get_or_create(
+                track_id=row['track_id'],
+                defaults={
+                    'titulo': row['nombre'],
+                    'artista': artista_obj,
+                    'album': album_obj,
+                    'popularidad': row['popularidad'],
+                    'duracion_ms': row['duracion_ms'],
+                    'explicito': row['explicito'],
+                    'genero': row.get('genero', '')
+                }
+            )
+
+            # 🔸 3. Asociar la canción al dataset
+            DatasetCancion.objects.create(dataset=dataset, cancion=cancion_obj)
+
+        # 🔸 4. Preparar artistas y canciones para render
         artistas_info = []
         artistas_con_canciones = []
         for art_id in artistas_ids:
@@ -328,19 +362,58 @@ def generar_dataset_backend(request):
             except Exception as e:
                 print(f"Error con artista {art_id}: {e}")
 
-        # También obtener resultados de búsqueda para mantener la lista visible
         resultados = buscar_artistas_por_nombre_o_genero(query) if query else []
 
-        contexto = {
+        return render(request, 'musica/index.html', {
             'query': query,
             'resultados': resultados,
             'artistas_con_canciones': artistas_con_canciones,
-            'dataset_generado': request.session.get('dataset_generado', False),
-        }
-
-        return render(request, 'musica/index.html', contexto)
+            'dataset_generado': True,
+        })
 
     return redirect('index')
 
+@login_required
+def historial_datasets(request):
+    datasets = Dataset.objects.filter(usuario=request.user).order_by('-fecha_creacion')
+    query = request.GET.get("query", "")
 
+    historial = []
+    for dataset in datasets:
+        canciones = [dc.cancion for dc in DatasetCancion.objects.filter(dataset=dataset).select_related('cancion')]
+        historial.append({
+            'dataset': dataset,
+            'canciones': canciones
+        })
 
+    return render(request, 'musica/historial_datasets.html', {
+        'historial': historial,
+        'query': query,
+    })
+
+@login_required
+def toggle_favorito(request, artista_id):
+    usuario = request.user
+
+    # Buscá en tu código cómo obtener el nombre y la imagen del artista,
+    # o pásalos desde el front para guardarlos acá.
+    nombre = request.GET.get('nombre', '')  
+    imagen_url = request.GET.get('imagen_url', '')
+
+    favorito, created = ArtistaFavorito.objects.get_or_create(
+        usuario=usuario,
+        artista_id=artista_id,
+        defaults={'nombre': nombre, 'imagen_url': imagen_url}
+    )
+    if not created:
+        # Si ya existe, lo eliminamos (toggle)
+        favorito.delete()
+
+    return redirect(request.META.get('HTTP_REFERER', '/'))
+
+@login_required
+def ver_favoritos(request):
+    favoritos = ArtistaFavorito.objects.filter(usuario=request.user)
+    return render(request, 'musica/favoritos.html', {
+        'favoritos': favoritos
+    })

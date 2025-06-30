@@ -11,7 +11,10 @@ from .views import (
     register_view,
     password_reset_view,
     ver_estadisticas,
-    generar_dataset_backend
+    generar_dataset_backend,
+    historial_datasets,
+    toggle_favorito,
+    ver_favoritos,
 )
 
 urlpatterns = [
@@ -26,6 +29,9 @@ urlpatterns = [
     path('password-reset/', password_reset_view, name='password_reset'),
     path('estadisticas/', login_required(ver_estadisticas), name='ver_estadisticas'),
     path('generar_dataset/', login_required(generar_dataset_backend), name='generar_dataset'),
+    path('historial/', login_required(historial_datasets), name='historial_datasets'),
+    path('artista/favorito/<str:artista_id>/', login_required(toggle_favorito), name='toggle_favorito'),
+    path('favoritos/', login_required(ver_favoritos), name='ver_favoritos'),
 
 ]
 

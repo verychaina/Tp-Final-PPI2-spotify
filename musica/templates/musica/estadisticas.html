@@ -14,75 +14,105 @@
       min-height: 100vh;
       padding: 2rem 1rem;
     }
-    h1, h2 {
+
+    h1, h2, h4 {
       color: #1DB954;
-      text-align: center;
       font-weight: 700;
-    }
-    .img-fluid {
-      max-width: 100%;
-      height: auto;
-      margin-top: 1rem;
-    }
-    .volver {
-      display: block;
-      margin: 2rem auto 0 auto;
       text-align: center;
     }
+
+    .img-fluid {
+      background-color: #ffffff; /* fondo blanco */
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+      width: 100%;
+      height: auto;
+    }
+
+    .grid-container {
+      display: grid;
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+
+    .grafico {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .volver {
+      text-align: center;
+      margin-top: 3rem;
+    }
+
     .volver a {
       color: #1DB954;
       text-decoration: none;
-      font-weight: 700;
+      font-weight: bold;
+      font-size: 1.1rem;
     }
+
     .volver a:hover {
       text-decoration: underline;
+    }
+
+    /* Grid Responsive: 2 columnas en pantallas grandes, 1 en chicas */
+    @media (min-width: 992px) {
+      .grid-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 991px) {
+      .grid-container {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="container mt-5">
-    <h1 class="text-center text-success">Estadísticas Comparativas</h1>
+  <div class="container mt-4">
+    <h1>Estadísticas Comparativas</h1>
 
-    {% comment %} Mostrar todos los gráficos que llegan en graficos_extra {% endcomment %}
     {% if graficos_extra %}
-      {% for key, grafico in graficos_extra.items %}
-        <h2 class="mt-4">{{ grafico.titulo }}</h2>
-        <img src="data:image/png;base64,{{ grafico.imagen }}" class="img-fluid" alt="{{ grafico.titulo }}" />
-      {% endfor %}
+      <div class="grid-container">
+        {% for key, grafico in graficos_extra.items %}
+        <div class="grafico">
+          <h4>{{ grafico.titulo }}</h4>
+          <img src="data:image/png;base64,{{ grafico.imagen }}" class="img-fluid" alt="{{ grafico.titulo }}" />
+        </div>
+        {% endfor %}
+      </div>
     {% endif %}
 
     {% if graficos_dataset %}
-      <h2 class="text-center mt-5">Estadísticas Generales del Dataset</h2>
+      <h2 class="mt-5">Estadísticas Generales del Dataset</h2>
 
-      <div class="row mt-4">
-        <div class="col-md-6">
+      <div class="grid-container">
+        <div class="grafico">
           <h4>Géneros más comunes</h4>
           <img src="data:image/png;base64,{{ graficos_dataset.generos }}" class="img-fluid" alt="Géneros más comunes" />
         </div>
-        <div class="col-md-6">
+        <div class="grafico">
           <h4>Distribución de Popularidad</h4>
           <img src="data:image/png;base64,{{ graficos_dataset.popularidad }}" class="img-fluid" alt="Distribución de Popularidad" />
         </div>
-      </div>
-
-      <div class="row mt-4">
-        <div class="col-md-6">
+        <div class="grafico">
           <h4>Top Artistas por Popularidad</h4>
           <img src="data:image/png;base64,{{ graficos_dataset.artistas_pop }}" class="img-fluid" alt="Top Artistas por Popularidad" />
         </div>
-        <div class="col-md-6">
+        <div class="grafico">
           <h4>Duración Promedio por Artista</h4>
           <img src="data:image/png;base64,{{ graficos_dataset.duracion_artista }}" class="img-fluid" alt="Duración Promedio por Artista" />
         </div>
-      </div>
-
-      <div class="row mt-4">
-        <div class="col-md-6">
+        <div class="grafico">
           <h4>Distribución de canciones explícitas</h4>
           <img src="data:image/png;base64,{{ graficos_dataset.explicitas }}" class="img-fluid" alt="Distribución de canciones explícitas" />
         </div>
-        <div class="col-md-6">
+        <div class="grafico">
           <h4>Relación Popularidad - Duración</h4>
           <img src="data:image/png;base64,{{ graficos_dataset.pop_duracion }}" class="img-fluid" alt="Relación Popularidad - Duración" />
         </div>
